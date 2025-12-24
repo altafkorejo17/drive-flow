@@ -12,13 +12,118 @@ datasource db {
   provider = "postgresql"
 }
 
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum InstituteStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum StudentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum Specialization {
+  THEORY
+  PRACTICAL
+  BOTH
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  fullName     String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime @default(now())
+
+  roles        UserRole[]
+  institutes   UserInstitute[]
+  instructor   Instructor?
+  student      Student?
+
   @@map("users")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     Int @id @default(autoincrement())
+  userId Int
+  roleId Int
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Institute {
+  id            Int    @id @default(autoincrement())
+  name          String
+  licenseNumber String
+  emirate       String
+  status        InstituteStatus @default(ACTIVE)
+
+  users       UserInstitute[]
+  instructors Instructor[]
+  students    Student[]
+
+  @@map("institutes")
+}
+
+model UserInstitute {
+  id          Int @id @default(autoincrement())
+  userId      Int
+  instituteId Int
+
+  user      User      @relation(fields: [userId], references: [id])
+  institute Institute @relation(fields: [instituteId], references: [id])
+
+  @@unique([userId, instituteId])
+  @@map("user_institutes")
+}
+
+model Instructor {
+  id             Int @id @default(autoincrement())
+  userId         Int @unique
+  instituteId    Int
+  licenseNumber  String
+  licenseExpiry  DateTime
+  specialization Specialization
+
+  user      User      @relation(fields: [userId], references: [id])
+  institute Institute @relation(fields: [instituteId], references: [id])
+
+  @@map("instructors")
+}
+
+model Student {
+  id          Int @id @default(autoincrement())
+  instituteId Int
+  userId      Int? @unique
+  emiratesId  String @unique
+  status      StudentStatus @default(ACTIVE)
+
+  user      User?      @relation(fields: [userId], references: [id])
+  institute Institute  @relation(fields: [instituteId], references: [id])
+
+  @@map("students")
 }
 
 
