@@ -12,116 +12,162 @@ datasource db {
   provider = "postgresql"
 }
 
-
-enum user_status {
-  ACTIVE
-  INACTIVE
+enum UserRole {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  INSTRUCTOR
+  STUDENT
 }
 
-enum institute_status {
+enum UserStatus {
   ACTIVE
   INACTIVE
+  SUSPENDED
 }
 
-enum student_status {
-  ACTIVE
+enum LessonStatus {
+  SCHEDULED
   COMPLETED
-  DROPPED
+  CANCELLED
 }
 
-enum specialization {
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum LessonTypeName {
   THEORY
   PRACTICAL
-  BOTH
+  TEST
 }
 
-model user {
-  id            Int      @id @default(autoincrement()) @map("id")
-  full_name     String   @map("full_name")
-  email         String   @unique @map("email")
-  phone         String?  @map("phone")
-  password      String   @map("password")
-  status        user_status @default(ACTIVE) @map("status")
-  created_at    DateTime @default(now()) @map("created_at")
-
-  roles         user_role[]
-  institutes    user_institute[]
-  instructor    instructor?
-  student       student?
-
-  @@map("users")
+enum VehicleTypeName {
+  LMV
+  HMV
+  MOTORCYCLE
+  BUS
 }
 
-model role {
-  id     Int    @id @default(autoincrement()) @map("id")
-  name   String @unique @map("name")
+model users {
+  id           String      @id @default(uuid())
+  first_name   String      @db.VarChar(30)
+  last_name    String      @db.VarChar(30)
+  email        String?     @unique @db.VarChar(100)
+  emirates_id  String?     @unique @db.VarChar(20)
+  password     String
+  phone        String     @db.VarChar(20)
+  role         UserRole   
+  status       UserStatus  @default(ACTIVE)
+  school_id    String?
 
-  users  user_role[]
+  school       schools?    @relation(fields: [school_id], references: [id])
+  instructor   instructors?
+  student      students?
 
-  @@map("roles")
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
 }
 
-model user_role {
-  id      Int @id @default(autoincrement()) @map("id")
-  user_id Int @map("user_id")
-  role_id Int @map("role_id")
+model schools {
+  id            String       @id @default(uuid())
+  name          String
+  trade_license String       @unique
+  address       String?
 
-  user    user @relation(fields: [user_id], references: [id])
-  role    role @relation(fields: [role_id], references: [id])
+  users         users[]
+  instructors   instructors[]
+  students      students[]
 
-  @@unique([user_id, role_id])
-  @@map("user_roles")
+  created_at    DateTime     @default(now())
 }
 
-model institute {
-  id             Int    @id @default(autoincrement()) @map("id")
-  name           String @map("name")
-  license_number String @map("license_number")
-  emirate        String @map("emirate")
-  status         institute_status @default(ACTIVE) @map("status")
+model instructors {
+  id           String      @id @default(uuid())
+  user_id      String      @unique
+  school_id    String
+  license_no   String
+  experience   Int
 
-  users        user_institute[]
-  instructors  instructor[]
-  students     student[]
+  user         users       @relation(fields: [user_id], references: [id])
+  school       schools     @relation(fields: [school_id], references: [id])
+  lessons      lessons[]
 
-  @@map("institutes")
+  created_at   DateTime    @default(now())
 }
 
-model user_institute {
-  id           Int @id @default(autoincrement()) @map("id")
-  user_id      Int @map("user_id")
-  institute_id Int @map("institute_id")
+model students {
+  id            String      @id @default(uuid())
+  user_id       String      @unique
+  school_id     String
+  file_no       String      @unique
+  nationality   String?
 
-  user        user      @relation(fields: [user_id], references: [id])
-  institute   institute @relation(fields: [institute_id], references: [id])
+  user          users       @relation(fields: [user_id], references: [id])
+  school        schools     @relation(fields: [school_id], references: [id])
+  lessons       lessons[]
+  payments      payments[]
 
-  @@unique([user_id, institute_id])
-  @@map("user_institutes")
+  created_at    DateTime    @default(now())
 }
 
-model instructor {
-  id             Int @id @default(autoincrement()) @map("id")
-  user_id        Int @unique @map("user_id")
-  institute_id   Int @map("institute_id")
-  license_number String @map("license_number")
-  license_expiry DateTime @map("license_expiry")
-  specialization specialization @map("specialization")
+model lesson_types {
+  id    Int             @id @default(autoincrement())
+  name  LessonTypeName  @unique
 
-  user       user      @relation(fields: [user_id], references: [id])
-  institute  institute @relation(fields: [institute_id], references: [id])
-
-  @@map("instructors")
+  lessons lessons[]
 }
 
-model student {
-  id           Int @id @default(autoincrement()) @map("id")
-  institute_id Int @map("institute_id")
-  user_id      Int? @unique @map("user_id")
-  emirates_id  String @unique @map("emirates_id")
-  status       student_status @default(ACTIVE) @map("status")
+model vehicle_types {
+  id    Int             @id @default(autoincrement())
+  name  VehicleTypeName @unique
 
-  user       user?      @relation(fields: [user_id], references: [id])
-  institute  institute  @relation(fields: [institute_id], references: [id])
-
-  @@map("students")
+  vehicles vehicles[]
 }
+
+model vehicles {
+  id               String       @id @default(uuid())
+  plate_no         String       @unique
+  vehicle_type_id  Int
+  model            String?
+  transmission     String
+  insurance_expiry DateTime
+  status           UserStatus
+
+  vehicle_type     vehicle_types @relation(fields: [vehicle_type_id], references: [id])
+  lessons          lessons[]
+
+  created_at       DateTime      @default(now())
+}
+
+model lessons {
+  id            String       @id @default(uuid())
+  student_id    String
+  instructor_id String
+  vehicle_id    String?
+  lesson_type_id Int
+  scheduled_at  DateTime
+  duration_min  Int
+  status        LessonStatus  @default(SCHEDULED)
+
+  student       students      @relation(fields: [student_id], references: [id])
+  instructor    instructors   @relation(fields: [instructor_id], references: [id])
+  vehicle       vehicles?     @relation(fields: [vehicle_id], references: [id])
+  lesson_type   lesson_types  @relation(fields: [lesson_type_id], references: [id])
+
+  created_at    DateTime      @default(now())
+}
+
+model payments {
+  id          String         @id @default(uuid())
+  student_id  String
+  amount      Decimal
+  method      String?
+  status      PaymentStatus  @default(PENDING)
+
+  student     students       @relation(fields: [student_id], references: [id])
+
+  created_at  DateTime       @default(now())
+}
+
