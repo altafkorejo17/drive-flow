@@ -1,0 +1,6 @@
+enum UserRole {
+  SUPER_ADMIN,
+  ADMIN,
+  INSTRUCTOR,
+  STUDENT,
+}

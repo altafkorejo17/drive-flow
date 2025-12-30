@@ -52,22 +52,22 @@ enum VehicleTypeName {
 
 model users {
   id           String      @id @default(uuid())
-  first_name   String      @db.VarChar(30)
-  last_name    String      @db.VarChar(30)
+  firstName   String      @db.VarChar(30) @map("first_name")
+  lastName    String      @db.VarChar(30) @map("last_name")
   email        String?     @unique @db.VarChar(100)
-  emirates_id  String?     @unique @db.VarChar(20)
+  emiratesId  String?     @unique @db.VarChar(20) @map("emirates_id")
   password     String
   phone        String     @db.VarChar(20)
   role         UserRole   
-  status       UserStatus  @default(ACTIVE)
-  school_id    String?
+  status       UserStatus @default(ACTIVE)
+  schoolId    String?    @map("school_id")
 
-  school       schools?    @relation(fields: [school_id], references: [id])
+  school       schools?    @relation(fields: [schoolId], references: [id])
   instructor   instructors?
   student      students?
 
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
 }
 
 model schools {
