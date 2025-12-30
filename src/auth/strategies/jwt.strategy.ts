@@ -7,18 +7,18 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private configService: ConfigService,
-    private authService: AuthService,
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: configService.get<string>('JWT_SECRET')!,
     });
   }
 
   async validate(payload: any) {
-    // const user = await this.authService.findByEmail(payload.email);
-    // if (!user) throw new UnauthorizedException();
-    // return { id: payload.sub, email: payload.email };
+    const user = await this.authService.findByEmail(payload.email);
+    if (!user) throw new UnauthorizedException();
+    return user;
   }
 }

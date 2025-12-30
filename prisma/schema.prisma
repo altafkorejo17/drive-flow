@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -50,124 +44,141 @@ enum VehicleTypeName {
   BUS
 }
 
-model users {
-  id           String      @id @default(uuid())
+model User {
+  id          String      @id @default(uuid())
   firstName   String      @db.VarChar(30) @map("first_name")
   lastName    String      @db.VarChar(30) @map("last_name")
-  email        String?     @unique @db.VarChar(100)
+  email       String?     @unique @db.VarChar(100)
   emiratesId  String?     @unique @db.VarChar(20) @map("emirates_id")
-  password     String
-  phone        String     @db.VarChar(20)
-  role         UserRole   
-  status       UserStatus @default(ACTIVE)
-  schoolId    String?    @map("school_id")
+  password    String
+  phone       String      @db.VarChar(20)
+  role        UserRole
+  status      UserStatus  @default(ACTIVE)
+  schoolId    String?     @map("school_id")
 
-  school       schools?    @relation(fields: [schoolId], references: [id])
-  instructor   instructors?
-  student      students?
+  school      School?     @relation(fields: [schoolId], references: [id])
+  instructor  Instructor?
+  student     Student?
 
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("users")
 }
 
-model schools {
-  id            String       @id @default(uuid())
-  name          String
-  trade_license String       @unique
-  address       String?
+model School {
+  id           String        @id @default(uuid())
+  name         String
+  tradeLicense String        @unique @map("trade_license")
+  address      String?
 
-  users         users[]
-  instructors   instructors[]
-  students      students[]
+  users        User[]
+  instructors  Instructor[]
+  students     Student[]
 
-  created_at    DateTime     @default(now())
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("schools")
 }
 
-model instructors {
-  id           String      @id @default(uuid())
-  user_id      String      @unique
-  school_id    String
-  license_no   String
-  experience   Int
+model Instructor {
+  id         String     @id @default(uuid())
+  userId     String     @unique @map("user_id")
+  schoolId   String     @map("school_id")
+  licenseNo  String     @map("license_no")
+  experience Int
 
-  user         users       @relation(fields: [user_id], references: [id])
-  school       schools     @relation(fields: [school_id], references: [id])
-  lessons      lessons[]
+  user       User       @relation(fields: [userId], references: [id])
+  school     School     @relation(fields: [schoolId], references: [id])
+  lessons    Lesson[]
 
-  created_at   DateTime    @default(now())
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  @@map("instructors")
 }
 
-model students {
-  id            String      @id @default(uuid())
-  user_id       String      @unique
-  school_id     String
-  file_no       String      @unique
-  nationality   String?
+model Student {
+  id          String     @id @default(uuid())
+  userId      String     @unique @map("user_id")
+  schoolId    String     @map("school_id")
+  fileNo      String     @unique @map("file_no")
+  nationality String?
 
-  user          users       @relation(fields: [user_id], references: [id])
-  school        schools     @relation(fields: [school_id], references: [id])
-  lessons       lessons[]
-  payments      payments[]
+  user        User       @relation(fields: [userId], references: [id])
+  school      School     @relation(fields: [schoolId], references: [id])
+  lessons     Lesson[]
+  payments    Payment[]
 
-  created_at    DateTime    @default(now())
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@map("students")
 }
 
-model lesson_types {
-  id    Int             @id @default(autoincrement())
-  name  LessonTypeName  @unique
+model LessonType {
+  id      Int             @id @default(autoincrement())
+  name    LessonTypeName  @unique
 
-  lessons lessons[]
+  lessons Lesson[]
+
+  @@map("lesson_types")
 }
 
-model vehicle_types {
-  id    Int             @id @default(autoincrement())
-  name  VehicleTypeName @unique
+model VehicleType {
+  id        Int             @id @default(autoincrement())
+  name      VehicleTypeName @unique
 
-  vehicles vehicles[]
+  vehicles  Vehicle[]
+
+  @@map("vehicle_types")
 }
 
-model vehicles {
-  id               String       @id @default(uuid())
-  plate_no         String       @unique
-  vehicle_type_id  Int
+model Vehicle {
+  id               String      @id @default(uuid())
+  plateNo          String      @unique @map("plate_no")
+  vehicleTypeId    Int         @map("vehicle_type_id")
   model            String?
   transmission     String
-  insurance_expiry DateTime
+  insuranceExpiry  DateTime    @map("insurance_expiry")
   status           UserStatus
 
-  vehicle_type     vehicle_types @relation(fields: [vehicle_type_id], references: [id])
-  lessons          lessons[]
+  vehicleType      VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  lessons          Lesson[]
 
-  created_at       DateTime      @default(now())
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  @@map("vehicles")
 }
 
-model lessons {
-  id            String       @id @default(uuid())
-  student_id    String
-  instructor_id String
-  vehicle_id    String?
-  lesson_type_id Int
-  scheduled_at  DateTime
-  duration_min  Int
+model Lesson {
+  id            String        @id @default(uuid())
+  studentId     String        @map("student_id")
+  instructorId  String        @map("instructor_id")
+  vehicleId     String?       @map("vehicle_id")
+  lessonTypeId  Int           @map("lesson_type_id")
+  scheduledAt   DateTime      @map("scheduled_at")
+  durationMin   Int           @map("duration_min")
   status        LessonStatus  @default(SCHEDULED)
 
-  student       students      @relation(fields: [student_id], references: [id])
-  instructor    instructors   @relation(fields: [instructor_id], references: [id])
-  vehicle       vehicles?     @relation(fields: [vehicle_id], references: [id])
-  lesson_type   lesson_types  @relation(fields: [lesson_type_id], references: [id])
+  student       Student       @relation(fields: [studentId], references: [id])
+  instructor    Instructor    @relation(fields: [instructorId], references: [id])
+  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
+  lessonType    LessonType    @relation(fields: [lessonTypeId], references: [id])
 
-  created_at    DateTime      @default(now())
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  @@map("lessons")
 }
 
-model payments {
-  id          String         @id @default(uuid())
-  student_id  String
-  amount      Decimal
-  method      String?
-  status      PaymentStatus  @default(PENDING)
+model Payment {
+  id         String        @id @default(uuid())
+  studentId  String        @map("student_id")
+  amount     Decimal
+  method     String?
+  status     PaymentStatus @default(PENDING)
 
-  student     students       @relation(fields: [student_id], references: [id])
+  student    Student       @relation(fields: [studentId], references: [id])
 
-  created_at  DateTime       @default(now())
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@map("payments")
 }
-

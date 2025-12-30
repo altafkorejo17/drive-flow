@@ -1,3 +1,4 @@
+import { UserStatus, UserRole } from '@prisma/client';
 import {
   IsEmail,
   IsEnum,
