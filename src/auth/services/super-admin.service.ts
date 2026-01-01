@@ -113,9 +113,34 @@ export class SuperAdminService {
   }
 
   async getAllSuperAdmins() {
-    return this.prisma.user.findMany({
+    const user = this.prisma.user.findMany({
       where: { role: 'SUPER_ADMIN' },
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        emiratesId: true,
+        phone: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
+
+    return (await user).map((user) => ({
+      id: user.id,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      email: user.email,
+      emirates_id: user.emiratesId,
+      phone: user.phone,
+      role: user.role,
+      status: user.status,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt,
+    }));
   }
 }
