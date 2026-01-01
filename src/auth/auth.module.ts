@@ -22,7 +22,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
     }),
   ],
-  providers: [AuthService, SuperAdminService, AdminService],
+  providers: [
+    AuthService, 
+    SuperAdminService, 
+    AdminService, 
+    JwtStrategy
+  ],
   exports: [AuthService],
   controllers: [AuthController],
 })

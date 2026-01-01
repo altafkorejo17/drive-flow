@@ -6,8 +6,4 @@ export const AuthProviders = [
     provide: APP_GUARD,
     useClass: JwtAuthGuard,
   },
-  {
-    provide: APP_GUARD,
-    useClass: JwtAuthGuard,
-  },
 ];
