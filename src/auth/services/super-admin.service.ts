@@ -1,58 +1,32 @@
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateSuperAdminDto } from '../dto/super-admin/create-super-admin.dto';
+import { JwtTokenService } from './jwt-token.service';
+import { PasswordService } from './password.service';
+import { UserValidationService } from './user-validation.service';
 import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { CreateSuperAdminDto } from '../dto/super-admin/create-super-admin.dto';
 import { SuperAdminLoginDto } from '../dto/super-admin/super-admin-login.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from '../dto/create-user.dto';
 
 @Injectable()
 export class SuperAdminService {
-  private readonly BCRYPT_SALT_ROUNDS = 10;
-
   constructor(
-    private jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly validationService: UserValidationService,
+    private readonly passwordService: PasswordService,
+    private readonly jwtTokenService: JwtTokenService,
   ) {}
 
-  async register(dto: CreateSuperAdminDto) {
-    await this.validateUser(dto);
-    const hashedPassword = await this.hashPassword(dto.password);
-    return this.createUser(dto, hashedPassword);
-  }
+  async create<T extends CreateUserDto>(dto: T) {
+    await this.validationService.validateNewUser(dto.email, dto.emirates_id);
+    const hashedPassword = await this.passwordService.hashPassword(
+      dto.password,
+    );
 
-  private async validateUser(dto: CreateSuperAdminDto) {
-    if (!dto.email && !dto?.emirates_id) {
-      throw new BadRequestException(
-        'Either email or Emirates ID must be provided.',
-      );
-    }
-
-    const existingUser = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: dto.email ?? undefined },
-          { emiratesId: dto.emirates_id ?? undefined },
-        ],
-      },
-    });
-
-    if (existingUser) {
-      throw new BadRequestException(
-        'User with provided email or Emirates ID already exists.',
-      );
-    }
-  }
-
-  private async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, this.BCRYPT_SALT_ROUNDS);
-  }
-
-  private async createUser(dto: CreateSuperAdminDto, hashedPassword: string) {
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         firstName: dto.first_name,
         lastName: dto.last_name,
@@ -75,30 +49,36 @@ export class SuperAdminService {
         createdAt: true,
       },
     });
+
+    return {
+      id: user.id,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      email: user.email,
+      emirates_id: user.emiratesId,
+      role: user.role,
+      status: user.status,
+      created_at: user.createdAt,
+    };
   }
 
-  async superAdminLogin(dto: SuperAdminLoginDto) {
-    if (!dto.email) {
-      throw new BadRequestException('Email ID is required');
-    }
+  async login(dto: SuperAdminLoginDto) {
+    if (!dto.email) throw new BadRequestException('Email ID is required');
 
     const user = await this.prisma.user.findFirst({
-      where: {
-        AND: [{ role: 'SUPER_ADMIN' }, { email: dto.email }],
-      },
+      where: { AND: [{ role: 'SUPER_ADMIN' }, { email: dto.email }] },
     });
-    if (!user) {
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+
+    const isPasswordValid = await this.passwordService.comparePassword(
+      dto.password,
+      user.password,
+    );
+    if (!isPasswordValid)
       throw new UnauthorizedException('Invalid credentials');
-    }
 
-    //compare password
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials.');
-    }
+    const token = this.jwtTokenService.generateToken(user.id, user.role);
 
-    const payload = { sub: user.id, role: user.role };
-    const token = this.jwtService.sign(payload);
     return {
       user: {
         id: user.id,
@@ -112,8 +92,8 @@ export class SuperAdminService {
     };
   }
 
-  async getAllSuperAdmins() {
-    const user = this.prisma.user.findMany({
+  async list() {
+    const users = await this.prisma.user.findMany({
       where: { role: 'SUPER_ADMIN' },
       orderBy: { createdAt: 'desc' },
       select: {
@@ -130,7 +110,7 @@ export class SuperAdminService {
       },
     });
 
-    return (await user).map((user) => ({
+    return users.map((user) => ({
       id: user.id,
       first_name: user.firstName,
       last_name: user.lastName,
@@ -143,4 +123,6 @@ export class SuperAdminService {
       updated_at: user.updatedAt,
     }));
   }
+
+  async createAdmin(dto: any) {}
 }
