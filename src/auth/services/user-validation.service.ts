@@ -6,7 +6,8 @@ export class UserValidationService {
   constructor(private readonly prisma: PrismaService) {}
 
   async validateNewUser(email?: string, emiratesId?: string) {
-    if (!email && !emiratesId) {
+    console.log(email);
+    if (!email || !emiratesId) {
       throw new BadRequestException(
         'Either email or Emirates ID must be provided.',
       );

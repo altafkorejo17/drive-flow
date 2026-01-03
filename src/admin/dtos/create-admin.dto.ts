@@ -1,28 +1,31 @@
-import { UserStatus, UserRole } from '@prisma/client';
 import {
   IsEmail,
   IsEnum,
   IsIn,
-  IsOptional,
+  IsNotEmpty,
   IsString,
   MinLength,
 } from 'class-validator';
+import { UserRole, UserStatus } from '@prisma/client';
 
-export class createAdminDto {
+export class CreateAdminDto {
   @IsString()
+  @IsNotEmpty()
   first_name: string;
 
   @IsString()
+  @IsNotEmpty()
   last_name: string;
 
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @IsString()
+  @IsNotEmpty()
   emirates_id: string;
 
   @IsString()
-  @MinLength(6)
   password: string;
 
   @IsString()
@@ -31,7 +34,13 @@ export class createAdminDto {
   @IsEnum(UserStatus)
   status: UserStatus;
 
-  @IsOptional()
-  @IsString()
+  @IsIn([
+    UserRole.ADMIN,
+    UserRole.INSTRUCTOR,
+    UserRole.MANAGER,
+    UserRole.STUDENT,
+  ])
+  role: UserRole;
+
   school_id?: string;
 }

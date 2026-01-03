@@ -1,7 +1,7 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { UserRole, UserStatus } from '@prisma/client';
 
-export class CreateSuperAdminDto {
+export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   first_name: string;

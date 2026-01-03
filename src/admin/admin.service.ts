@@ -1,36 +1,31 @@
-import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateSuperAdminDto } from '../dto/super-admin/create-super-admin.dto';
-import { JwtTokenService } from './jwt-token.service';
-import { PasswordService } from './password.service';
 import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { SuperAdminLoginDto } from '../dto/super-admin/super-admin-login.dto';
-import { AuthService } from '../auth.service';
+import { AuthService } from 'src/auth/auth.service';
 import { AuthResource } from 'src/common/resources/auth/auth.resource';
+import { CreateAdminDto } from './dtos/create-admin.dto';
+import { AdminLoginDto } from './dtos/admin-login.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@prisma/client';
 
 @Injectable()
-export class SuperAdminService {
+export class AdminService {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly authService: AuthService,
   ) {}
 
-  async create(dto: CreateSuperAdminDto) {
+  async create(dto: CreateAdminDto) {
     const user = await this.authService.createUser(dto);
     return new AuthResource(user);
   }
 
-  async login(dto: SuperAdminLoginDto) {
+  async login(dto: AdminLoginDto) {
     if (!dto.email) throw new BadRequestException('Email ID is required');
 
-    const user = await this.authService.findOne(
-      dto.email,
-      UserRole.SUPER_ADMIN,
-    );
+    const user = await this.authService.findOne(dto.email, UserRole.ADMIN);
 
     const isPasswordValid = await this.authService.isPasswordValid(
       dto.password,

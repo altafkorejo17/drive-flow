@@ -8,6 +8,5 @@ export class CreateUserDto {
   password: string;
   phone: string;
   status: UserStatus;
-  role: UserRole;
   school_id?: string;
 }
