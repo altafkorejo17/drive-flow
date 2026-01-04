@@ -8,6 +8,8 @@ import { JwtAuthModule } from 'src/jwt/jwt-auth.module';
 import { JwtTokenService } from './services/jwt-token.service';
 import { UserValidationService } from './services/user-validation.service';
 import { PasswordService } from './services/password.service';
+import { JwtStrategy } from 'src/jwt/jwt.strategy';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [PrismaModule, PassportModule, JwtAuthModule],
@@ -17,6 +19,7 @@ import { PasswordService } from './services/password.service';
     JwtTokenService,
     UserValidationService,
     PasswordService,
+    JwtStrategy,
   ],
   exports: [AuthService],
   controllers: [AuthController],

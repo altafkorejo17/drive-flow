@@ -41,7 +41,7 @@ export class SuperAdminService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.authService.generateToken(user.id, user.role);
+    const token = await this.authService.generateToken(user.id, user.role);
 
     return {
       user: new AuthResource(user),

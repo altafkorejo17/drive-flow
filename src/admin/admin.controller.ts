@@ -1,8 +1,5 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CreateAdminDto } from './dtos/create-admin.dto';
-import { AuthService } from 'src/auth/auth.service';
-import { AuthResource } from 'src/common/resources/auth/auth.resource';
-import { LoginDto } from 'src/auth/dto/login.dto';
 import { AdminLoginDto } from './dtos/admin-login.dto';
 import { AdminService } from './admin.service';
 
@@ -18,5 +15,10 @@ export class AdminController {
   @Post('/login')
   login(@Body() dto: AdminLoginDto) {
     return this.adminService.login(dto);
+  }
+
+  @Get()
+  list() {
+    return this.adminService.list();
   }
 }

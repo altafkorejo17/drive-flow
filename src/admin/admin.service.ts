@@ -36,7 +36,7 @@ export class AdminService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const token = this.authService.generateToken(user.id, user.role);
+    const token = await this.authService.generateToken(user.id, user.role);
 
     return {
       user: new AuthResource(user),
@@ -46,7 +46,7 @@ export class AdminService {
 
   async list() {
     const users = await this.prisma.user.findMany({
-      where: { role: 'SUPER_ADMIN' },
+      where: { role: UserRole.ADMIN },
       orderBy: { id: 'desc' },
       select: {
         id: true,

@@ -18,6 +18,6 @@ import { JwtAuthModule } from './jwt/jwt-auth.module';
     AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ...AuthProviders],
 })
 export class AppModule {}
