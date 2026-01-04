@@ -1,4 +1,5 @@
-import { User, UserRole, UserStatus } from '@prisma/client';
+import { Instructor, User, UserRole, UserStatus } from '@prisma/client';
+import { InstructorResource } from './instructor/instructor.resource';
 
 type UserOutput = {
   id: string;
@@ -10,6 +11,7 @@ type UserOutput = {
   role: UserRole;
   status: UserStatus;
   createdAt: Date;
+  instructor?: any;
 };
 
 export class AuthResource {
@@ -22,6 +24,7 @@ export class AuthResource {
   role: UserRole;
   status: UserStatus;
   created_at: Date;
+  instructor?: InstructorResource;
 
   constructor(user: UserOutput) {
     this.id = user.id;
@@ -33,6 +36,9 @@ export class AuthResource {
     this.role = user.role;
     this.status = user.status;
     this.created_at = user.createdAt;
+    if (user.instructor) {
+      this.instructor = new InstructorResource(user.instructor);
+    }
   }
 
   static collection(users: UserOutput[]) {

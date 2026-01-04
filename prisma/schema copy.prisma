@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MANAGER
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum LessonStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum LessonTypeName {
+  THEORY
+  PRACTICAL
+  TEST
+}
+
+enum VehicleTypeName {
+  LMV
+  HMV
+  MOTORCYCLE
+  BUS
+}
+
+model User {
+  id          String      @id @default(uuid())
+  firstName   String      @db.VarChar(30) @map("first_name")
+  lastName    String      @db.VarChar(30) @map("last_name")
+  email       String?     @unique @db.VarChar(100)
+  emiratesId  String?     @unique @db.VarChar(20) @map("emirates_id")
+  password    String
+  phone       String      @db.VarChar(20)
+  role        UserRole
+  status      UserStatus  @default(ACTIVE)
+  schoolId    String?     @map("school_id")
+
+  school      School[]     @relation(fields: [schoolId], references: [id])
+  instructor  Instructor?
+  student     Student?
+
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model School {
+  id           String        @id @default(uuid())
+  name         String
+  tradeLicense String        @unique @map("trade_license")
+  address      String?
+
+  users        User[]
+  instructors  Instructor[]
+  students     Student[]
+
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("schools")
+}
+
+model Instructor {
+  id         String     @id @default(uuid())
+  userId     String     @unique @map("user_id")
+  schoolId   String     @map("school_id")
+  licenseNo  String     @map("license_no")
+  experience Int
+
+  user       User       @relation(fields: [userId], references: [id])
+  school     School     @relation(fields: [schoolId], references: [id])
+  lessons    Lesson[]
+
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  @@map("instructors")
+}
+
+model Student {
+  id          String     @id @default(uuid())
+  userId      String     @unique @map("user_id")
+  schoolId    String     @map("school_id")
+  fileNo      String     @unique @map("file_no")
+  nationality String?
+
+  user        User       @relation(fields: [userId], references: [id])
+  school      School     @relation(fields: [schoolId], references: [id])
+  lessons     Lesson[]
+  payments    Payment[]
+
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@map("students")
+}
+
+model LessonType {
+  id      Int             @id @default(autoincrement())
+  name    LessonTypeName  @unique
+
+  lessons Lesson[]
+
+  @@map("lesson_types")
+}
+
+model VehicleType {
+  id        Int             @id @default(autoincrement())
+  name      VehicleTypeName @unique
+
+  vehicles  Vehicle[]
+
+  @@map("vehicle_types")
+}
+
+model Vehicle {
+  id               String      @id @default(uuid())
+  plateNo          String      @unique @map("plate_no")
+  vehicleTypeId    Int         @map("vehicle_type_id")
+  model            String?
+  transmission     String
+  insuranceExpiry  DateTime    @map("insurance_expiry")
+  status           UserStatus
+
+  vehicleType      VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  lessons          Lesson[]
+
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  @@map("vehicles")
+}
+
+model Lesson {
+  id            String        @id @default(uuid())
+  studentId     String        @map("student_id")
+  instructorId  String        @map("instructor_id")
+  vehicleId     String?       @map("vehicle_id")
+  lessonTypeId  Int           @map("lesson_type_id")
+  scheduledAt   DateTime      @map("scheduled_at")
+  durationMin   Int           @map("duration_min")
+  status        LessonStatus  @default(SCHEDULED)
+
+  student       Student       @relation(fields: [studentId], references: [id])
+  instructor    Instructor    @relation(fields: [instructorId], references: [id])
+  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
+  lessonType    LessonType    @relation(fields: [lessonTypeId], references: [id])
+
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  @@map("lessons")
+}
+
+model Payment {
+  id         String        @id @default(uuid())
+  studentId  String        @map("student_id")
+  amount     Decimal
+  method     String?
+  status     PaymentStatus @default(PENDING)
+
+  student    Student       @relation(fields: [studentId], references: [id])
+
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@map("payments")
+}

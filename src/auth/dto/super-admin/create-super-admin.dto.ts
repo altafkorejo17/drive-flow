@@ -1,4 +1,13 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  ValidateIf,
+} from 'class-validator';
 import { UserRole, UserStatus } from '@prisma/client';
 
 export class CreateSuperAdminDto {
@@ -32,5 +41,9 @@ export class CreateSuperAdminDto {
   @IsEnum(UserRole)
   role: UserRole;
 
-  school_id?: string;
+  @ValidateIf((dto) => dto.role !== UserRole.SUPER_ADMIN)
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsUUID('4', { each: true })
+  school_ids?: string[];
 }

@@ -38,7 +38,13 @@ export class AuthService {
         password: hashedPassword,
         phone: dto.phone,
         role: dto.role,
-        schoolId: dto.school_id,
+        ...(dto.school_ids?.length && {
+          schools: {
+            create: dto.school_ids.map((schoolId) => ({
+              schoolId,
+            })),
+          },
+        }),
       },
       select: {
         id: true,

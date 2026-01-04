@@ -7,6 +7,9 @@ import { AdminModule } from './admin/admin.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthProviders } from './common/providers/providers';
 import { JwtAuthModule } from './jwt/jwt-auth.module';
+import { SchoolModule } from './school/school.module';
+import { JwtStrategy } from './jwt/jwt.strategy';
+import { InstructorModule } from './instructor/instructor.module';
 
 @Module({
   imports: [
@@ -16,8 +19,10 @@ import { JwtAuthModule } from './jwt/jwt-auth.module';
     PrismaModule,
     AuthModule,
     AdminModule,
+    SchoolModule,
+    InstructorModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ...AuthProviders],
+  providers: [AppService, ...AuthProviders, JwtStrategy],
 })
 export class AppModule {}
