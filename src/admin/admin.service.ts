@@ -9,6 +9,7 @@ import { CreateAdminDto } from './dtos/create-admin.dto';
 import { AdminLoginDto } from './dtos/admin-login.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { CreateInstructorDto } from 'src/instructor/dtos/create-instructor.dto';
 
 @Injectable()
 export class AdminService {
@@ -18,7 +19,10 @@ export class AdminService {
   ) {}
 
   async create(dto: CreateAdminDto) {
-    const user = await this.authService.createUser(dto);
+    const user = await this.prisma.$transaction(async (tx) => {
+      return await this.authService.createUser(tx, dto);
+    });
+
     return new AuthResource(user);
   }
 
@@ -46,9 +50,7 @@ export class AdminService {
 
   async findAll() {
     const users = await this.prisma.user.findMany({
-      where: {
-        role: { in: [UserRole.ADMIN, UserRole.INSTRUCTOR] },
-      },
+      where: { role: UserRole.ADMIN },
       orderBy: { id: 'desc' },
       select: {
         id: true,

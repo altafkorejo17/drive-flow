@@ -1,8 +1,15 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+} from '@nestjs/common';
 import { CreateAdminDto } from './dtos/create-admin.dto';
 import { AdminLoginDto } from './dtos/admin-login.dto';
 import { AdminService } from './admin.service';
 import { Public } from 'src/common/decorators/public.decorator';
+import { CreateInstructorDto } from 'src/instructor/dtos/create-instructor.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -10,7 +17,8 @@ export class AdminController {
 
   @Post()
   async create(@Body() dto: CreateAdminDto) {
-    return this.adminService.create(dto);
+    const user = this.adminService.create(dto);
+    return user;
   }
 
   @Public()

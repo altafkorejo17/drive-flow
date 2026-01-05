@@ -11,6 +11,7 @@ import { SuperAdminLoginDto } from '../dto/super-admin/super-admin-login.dto';
 import { AuthService } from '../auth.service';
 import { AuthResource } from 'src/common/resources/auth/auth.resource';
 import { UserRole } from '@prisma/client';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Injectable()
 export class SuperAdminService {
@@ -20,10 +21,14 @@ export class SuperAdminService {
   ) {}
 
   async create(dto: CreateSuperAdminDto) {
-    const user = await this.authService.createUser(dto);
+    const user = await this.prisma.$transaction(async (tx) => {
+      return this.authService.createUser(tx, dto);
+    });
+
     return new AuthResource(user);
   }
 
+  @Public()
   async login(dto: SuperAdminLoginDto) {
     if (!dto.email) throw new BadRequestException('Email ID is required');
 
@@ -49,7 +54,7 @@ export class SuperAdminService {
     };
   }
 
-  async list() {
+  async getAll() {
     const users = await this.prisma.user.findMany({
       where: { role: 'SUPER_ADMIN' },
       orderBy: { id: 'desc' },

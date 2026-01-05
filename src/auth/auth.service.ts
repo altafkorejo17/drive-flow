@@ -6,6 +6,8 @@ import { PasswordService } from './services/password.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtTokenService } from './services/jwt-token.service';
 import { UserRole } from '@prisma/client';
+import { CreateInstructorDto } from 'src/instructor/dtos/create-instructor.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,14 +24,32 @@ export class AuthService {
     });
   }
 
-  async createUser(dto: any) {
+  async createUser(tx, dto: any) {
     await this.validationService.validateNewUser(dto.email, dto.emirates_id);
 
     const hashedPassword = await this.passwordService.hashPassword(
       dto.password,
     );
 
-    return this.prisma.user.create({
+    let validSchoolIds: string[] = [];
+    if (dto.school_ids?.length) {
+      const schools = await tx.school.findMany({
+        where: { id: { in: dto.school_ids } },
+        select: { id: true },
+      });
+
+      validSchoolIds = schools.map((s) => s.id);
+
+      // Check for invalid IDs
+      const invalidIds = dto.school_ids.filter(
+        (id) => !validSchoolIds.includes(id),
+      );
+      if (invalidIds.length) {
+        throw new Error(`Invalid school IDs: ${invalidIds.join(', ')}`);
+      }
+    }
+
+    return tx.user.create({
       data: {
         firstName: dto.first_name,
         lastName: dto.last_name,
@@ -38,9 +58,9 @@ export class AuthService {
         password: hashedPassword,
         phone: dto.phone,
         role: dto.role,
-        ...(dto.school_ids?.length && {
+        ...(validSchoolIds?.length && {
           schools: {
-            create: dto.school_ids.map((schoolId) => ({
+            create: validSchoolIds.map((schoolId) => ({
               schoolId,
             })),
           },
@@ -79,5 +99,18 @@ export class AuthService {
 
   async generateToken(user_id: string, role: UserRole) {
     return this.jwtTokenService.generateToken(user_id, role);
+  }
+
+  async createInstructor(tx, user: { id: string }, dto: CreateInstructorDto) {
+    return tx.instructor.create({
+      data: {
+        user: {
+          connect: { id: user.id },
+        },
+        licenseNo: dto.license_no,
+        licenseExpiryDate: dto.license_expiry_date,
+        experience: dto.experience,
+      },
+    });
   }
 }

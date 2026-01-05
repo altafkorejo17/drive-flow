@@ -21,7 +21,7 @@ export class AuthController {
   }
 
   @Get()
-  list() {
-    return this.superAdminService.list();
+  getAll() {
+    return this.superAdminService.getAll();
   }
 }
